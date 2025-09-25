@@ -1,5 +1,7 @@
 import csv
 from datetime import datetime
+from auth import iniciar_fluxo_autenticacao, UsuarioAutenticado
+from config import validar_configuracao
 
 class Cliente:
     def __init__(self, cliente_id, nome, cpf, email, telefone):
@@ -111,10 +113,82 @@ def carregar_dados_csv(arquivo):
             ))
     return clientes, medidores, leituras
 
-#teste de leitura 
-dados_csv = "dados_leituras.csv"
-clientes, medidores, leituras = carregar_dados_csv(dados_csv)
-cliente = list(clientes.values())[0]
-medidor = list(medidores.values())[0]
+def executar_com_autenticacao():
+    """
+    Executa o sistema com autenticação GitHub
+    """
+    print("=== Sistema de Modelagem Computacional - Companhia de Energia ===")
+    print()
+    
+    # Verifica configuração
+    erros_config = validar_configuracao()
+    if erros_config:
+        print("⚠️  Configuração incompleta:")
+        for erro in erros_config:
+            print(f"   - {erro}")
+        print()
+        print("Para configurar a autenticação GitHub:")
+        print("1. Crie um OAuth App no GitHub (Settings > Developer settings > OAuth Apps)")
+        print("2. Configure as variáveis de ambiente:")
+        print("   export GITHUB_CLIENT_ID='seu_client_id'")
+        print("   export GITHUB_CLIENT_SECRET='seu_client_secret'")
+        print()
+        print("Executando sem autenticação...")
+        return executar_sem_autenticacao()
+    
+    # Inicia autenticação
+    print("🔐 Iniciando autenticação GitHub...")
+    auth = iniciar_fluxo_autenticacao()
+    
+    if not auth:
+        print("❌ Falha na autenticação. Executando sem autenticação...")
+        return executar_sem_autenticacao()
+    
+    # Cria usuário autenticado
+    usuario = UsuarioAutenticado(auth.user_info)
+    print(f"✅ Usuário autenticado: {usuario}")
+    print()
+    
+    # Executa sistema principal
+    return executar_sistema_principal(usuario)
 
-print(processar_leitura(cliente, medidor, leituras, 115))
+def executar_sem_autenticacao():
+    """
+    Executa o sistema sem autenticação (modo de demonstração)
+    """
+    print("🔓 Executando em modo demonstração (sem autenticação)")
+    return executar_sistema_principal(None)
+
+def executar_sistema_principal(usuario_autenticado=None):
+    """
+    Executa a lógica principal do sistema
+    """
+    if usuario_autenticado:
+        print(f"👤 Usuário: {usuario_autenticado.nome} (@{usuario_autenticado.login})")
+    
+    print("📊 Processando dados de leituras...")
+    
+    try:
+        dados_csv = "dados_leituras.csv"
+        clientes, medidores, leituras = carregar_dados_csv(dados_csv)
+        cliente = list(clientes.values())[0]
+        medidor = list(medidores.values())[0]
+        
+        resultado = processar_leitura(cliente, medidor, leituras, 115)
+        print(f"✅ Resultado: {resultado}")
+        
+        if usuario_autenticado:
+            print(f"📝 Processamento registrado para usuário: {usuario_autenticado.login}")
+        
+        return resultado
+        
+    except FileNotFoundError:
+        print("❌ Arquivo de dados não encontrado: dados_leituras.csv")
+        return None
+    except Exception as e:
+        print(f"❌ Erro no processamento: {e}")
+        return None
+
+# Execução principal
+if __name__ == "__main__":
+    executar_com_autenticacao()

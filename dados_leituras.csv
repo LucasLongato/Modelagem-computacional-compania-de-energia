@@ -1,0 +1,4 @@
+cliente_id,nome,cpf,email,telefone,medidor_id,num_medidor,leitura_id,mes_referencia,leitura_kwh,data_leitura
+1,João Silva,123.456.789-00,joao@email.com,11999999999,1,MED001,1,2023-01,100.5,2023-01-15
+1,João Silva,123.456.789-00,joao@email.com,11999999999,1,MED001,2,2023-02,105.2,2023-02-15
+1,João Silva,123.456.789-00,joao@email.com,11999999999,1,MED001,3,2023-03,110.1,2023-03-15
